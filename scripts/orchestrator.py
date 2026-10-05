@@ -43,8 +43,11 @@ def update_state(**kwargs):
     save_json(STATE_FILE, state)
 
 
-def run_opencode(prompt, files=None, model=None):
+def run_opencode(prompt, files=None, model=None, agent=None):
     command = ["opencode", "run", "--dir", str(ROOT)]
+
+    if agent:
+        command += ["--agent", agent]
 
     if model:
         command += ["--model", model]
@@ -144,6 +147,7 @@ Nach erfolgreicher Verarbeitung:
         prompt,
         files=[MASTER_PROMPT, QUEUE_FILE, BACKLOG_FILE],
         model=os.getenv("MASTER_MODEL"),
+        agent="master",
     )
 
     # The Master owns the queue mutation. Reload to verify the result.
@@ -183,6 +187,7 @@ Wenn die Recherche abgeschlossen ist, stoppe sofort.
             prompt,
             files=[RESEARCHER_PROMPT, task_file],
             model=os.getenv("RESEARCHER_MODEL"),
+            agent="researcher",
         )
     except Exception as exc:
         set_status(backlog, machine["id"], "failed")
