@@ -1,76 +1,1080 @@
+```html
 <!DOCTYPE html>
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>CNC Portalfräsen - Research-Eingabe</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>CNC Research Control</title>
+
     <style>
-        body { font-family: Arial, sans-serif; margin: 30px; background: #f4f6f8; }
-        .container { max-width: 700px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        h2 { color: #333; }
-        label { display: block; margin-top: 10px; font-weight: bold; }
-        input { width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        button { margin-top: 15px; padding: 10px 15px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
-        button:hover { background: #0056b3; }
-        textarea { width: 100%; height: 180px; margin-top: 15px; font-family: monospace; box-sizing: border-box; }
-        .hint { margin-top: 12px; color: #666; }
+        * {
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #05070a;
+            --panel: rgba(13, 17, 23, 0.78);
+            --panel-2: rgba(18, 24, 32, 0.72);
+            --border: rgba(255,255,255,0.09);
+            --text: #f4f7fb;
+            --muted: #8993a3;
+            --cyan: #00e5ff;
+            --blue: #3b82f6;
+            --green: #00ff9d;
+            --purple: #9b5cff;
+            --danger: #ff4d6d;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family:
+                Inter,
+                ui-sans-serif,
+                system-ui,
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                sans-serif;
+
+            color: var(--text);
+
+            background:
+                radial-gradient(
+                    circle at 15% 10%,
+                    rgba(0,229,255,0.12),
+                    transparent 28%
+                ),
+                radial-gradient(
+                    circle at 85% 80%,
+                    rgba(155,92,255,0.13),
+                    transparent 30%
+                ),
+                #05070a;
+
+            overflow-x: hidden;
+        }
+
+        /* CNC GRID */
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            opacity: 0.22;
+
+            background-image:
+                linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+
+            background-size: 40px 40px;
+
+            mask-image: linear-gradient(
+                to bottom,
+                black,
+                transparent 90%
+            );
+        }
+
+        /* TOP GLOW */
+
+        .top-glow {
+            position: fixed;
+            width: 700px;
+            height: 700px;
+            top: -400px;
+            left: 50%;
+            transform: translateX(-50%);
+
+            background: radial-gradient(
+                circle,
+                rgba(0,229,255,0.12),
+                transparent 70%
+            );
+
+            pointer-events: none;
+        }
+
+        /* APP */
+
+        .app {
+            width: min(1200px, calc(100% - 32px));
+            margin: 50px auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* HEADER */
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 30px;
+            margin-bottom: 28px;
+        }
+
+        .eyebrow {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+
+            color: var(--cyan);
+        }
+
+        .pulse {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--green);
+
+            box-shadow:
+                0 0 0 5px rgba(0,255,157,0.08),
+                0 0 18px var(--green);
+
+            animation: pulse 1.8s infinite;
+        }
+
+        @keyframes pulse {
+            0%,100% {
+                box-shadow:
+                    0 0 0 5px rgba(0,255,157,0.08),
+                    0 0 18px var(--green);
+            }
+
+            50% {
+                box-shadow:
+                    0 0 0 10px rgba(0,255,157,0.02),
+                    0 0 30px var(--green);
+            }
+        }
+
+        h1 {
+            margin: 9px 0 0;
+            font-size: clamp(34px, 5vw, 64px);
+            line-height: 0.95;
+            letter-spacing: -0.05em;
+            font-weight: 900;
+
+            background:
+                linear-gradient(
+                    100deg,
+                    #fff 10%,
+                    #a7f8ff 45%,
+                    var(--cyan) 75%
+                );
+
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .subtitle {
+            max-width: 650px;
+            margin-top: 15px;
+            color: var(--muted);
+            line-height: 1.6;
+            font-size: 14px;
+        }
+
+        /* STATUS */
+
+        .system-status {
+            padding: 14px 18px;
+            border: 1px solid var(--border);
+            background: rgba(255,255,255,0.025);
+            backdrop-filter: blur(18px);
+            border-radius: 14px;
+            white-space: nowrap;
+        }
+
+        .status-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--muted);
+        }
+
+        .status-value {
+            margin-top: 5px;
+            font-weight: 800;
+            color: var(--green);
+            font-size: 13px;
+        }
+
+        /* MAIN GRID */
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 0.9fr;
+            gap: 18px;
+        }
+
+        /* CARD */
+
+        .card {
+            position: relative;
+            overflow: hidden;
+
+            padding: 26px;
+
+            border: 1px solid var(--border);
+            border-radius: 22px;
+
+            background:
+                linear-gradient(
+                    145deg,
+                    rgba(255,255,255,0.055),
+                    rgba(255,255,255,0.018)
+                );
+
+            box-shadow:
+                0 30px 80px rgba(0,0,0,0.35),
+                inset 0 1px 0 rgba(255,255,255,0.04);
+
+            backdrop-filter: blur(24px);
+        }
+
+        .card::before {
+            content: "";
+            position: absolute;
+            width: 250px;
+            height: 250px;
+            top: -170px;
+            right: -100px;
+
+            background: rgba(0,229,255,0.12);
+            filter: blur(80px);
+            pointer-events: none;
+        }
+
+        .card-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .card-title h2 {
+            margin: 0;
+            font-size: 17px;
+            letter-spacing: -0.02em;
+        }
+
+        .card-number {
+            display: grid;
+            place-items: center;
+
+            width: 32px;
+            height: 32px;
+
+            border-radius: 10px;
+
+            color: var(--cyan);
+            font-size: 12px;
+            font-weight: 900;
+
+            background: rgba(0,229,255,0.08);
+            border: 1px solid rgba(0,229,255,0.15);
+        }
+
+        /* FORM */
+
+        .field {
+            margin-bottom: 17px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+
+            color: #cbd3df;
+
+            font-size: 11px;
+            font-weight: 800;
+
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .required {
+            color: var(--cyan);
+        }
+
+        input {
+            width: 100%;
+            padding: 14px 15px;
+
+            color: var(--text);
+            font-size: 14px;
+
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            outline: none;
+
+            background: rgba(0,0,0,0.25);
+
+            transition:
+                border-color 0.2s,
+                box-shadow 0.2s,
+                transform 0.2s;
+        }
+
+        input::placeholder {
+            color: #4e5867;
+        }
+
+        input:hover {
+            border-color: rgba(255,255,255,0.15);
+        }
+
+        input:focus {
+            border-color: var(--cyan);
+
+            box-shadow:
+                0 0 0 3px rgba(0,229,255,0.08),
+                0 0 30px rgba(0,229,255,0.08);
+
+            transform: translateY(-1px);
+        }
+
+        /* BUTTONS */
+
+        .actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 24px;
+        }
+
+        button {
+            position: relative;
+            overflow: hidden;
+
+            border: none;
+            border-radius: 12px;
+
+            padding: 14px 16px;
+
+            font-size: 12px;
+            font-weight: 900;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+
+            cursor: pointer;
+
+            transition:
+                transform 0.2s,
+                box-shadow 0.2s;
+        }
+
+        button::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+
+            background: linear-gradient(
+                110deg,
+                transparent 20%,
+                rgba(255,255,255,0.2),
+                transparent 80%
+            );
+
+            transform: translateX(-120%);
+            transition: transform 0.5s;
+        }
+
+        button:hover::after {
+            transform: translateX(120%);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        .primary {
+            color: #001216;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #8affff,
+                    var(--cyan)
+                );
+
+            box-shadow:
+                0 10px 35px rgba(0,229,255,0.2);
+        }
+
+        .secondary {
+            color: white;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #171d27,
+                    #0e131a
+                );
+
+            border: 1px solid rgba(255,255,255,0.09);
+        }
+
+        /* QUEUE */
+
+        .queue-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+
+            margin-bottom: 15px;
+        }
+
+        .queue-count {
+            padding: 6px 10px;
+
+            border-radius: 99px;
+
+            font-size: 10px;
+            font-weight: 900;
+
+            color: var(--green);
+
+            background: rgba(0,255,157,0.07);
+            border: 1px solid rgba(0,255,157,0.12);
+        }
+
+        textarea {
+            width: 100%;
+            height: 440px;
+
+            resize: vertical;
+
+            padding: 18px;
+
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 15px;
+
+            outline: none;
+
+            color: #b8f7ff;
+            background:
+                radial-gradient(
+                    circle at 90% 10%,
+                    rgba(0,229,255,0.06),
+                    transparent 25%
+                ),
+                #030507;
+
+            font-family:
+                "SFMono-Regular",
+                Consolas,
+                "Liberation Mono",
+                monospace;
+
+            font-size: 12px;
+            line-height: 1.7;
+
+            box-shadow:
+                inset 0 0 40px rgba(0,0,0,0.4);
+        }
+
+        /* EMPTY STATE */
+
+        .empty {
+            position: absolute;
+            inset: 100px 30px 30px;
+
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+
+            pointer-events: none;
+
+            opacity: 0.35;
+        }
+
+        .empty-icon {
+            font-size: 40px;
+            margin-bottom: 12px;
+            filter: grayscale(1);
+        }
+
+        .empty-text {
+            font-size: 12px;
+            color: var(--muted);
+            text-align: center;
+        }
+
+        /* FOOTER */
+
+        .footer {
+            display: flex;
+            justify-content: space-between;
+
+            margin-top: 18px;
+            padding: 0 4px;
+
+            color: #4f5968;
+            font-size: 10px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        /* TOAST */
+
+        .toast {
+            position: fixed;
+            right: 25px;
+            bottom: 25px;
+
+            padding: 13px 17px;
+
+            border-radius: 12px;
+
+            background: rgba(13,17,23,0.92);
+            border: 1px solid rgba(0,255,157,0.2);
+
+            color: var(--green);
+
+            font-size: 12px;
+            font-weight: 800;
+
+            box-shadow:
+                0 20px 50px rgba(0,0,0,0.5);
+
+            transform: translateY(30px);
+            opacity: 0;
+
+            transition: 0.3s;
+
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        /* RESPONSIVE */
+
+        @media (max-width: 850px) {
+            .header {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .system-status {
+                width: 100%;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            textarea {
+                height: 350px;
+            }
+        }
+
+        @media (max-width: 550px) {
+            .app {
+                width: min(100% - 20px, 1200px);
+                margin: 25px auto;
+            }
+
+            .card {
+                padding: 20px;
+                border-radius: 18px;
+            }
+
+            .actions {
+                grid-template-columns: 1fr;
+            }
+
+            h1 {
+                font-size: 42px;
+            }
+        }
     </style>
 </head>
+
 <body>
-<div class="container">
-    <h2>Neue Research-Eingabe</h2>
-    <p class="hint">Nur Hersteller ausfüllen = Hersteller-Discovery. Baureihe und Modell ausfüllen = konkrete Maschine. Die Eingaben werden als <strong>research_queue.json</strong> heruntergeladen und anschließend ins GitHub-Repository übernommen.</p>
 
-    <form id="machineForm">
-        <label for="manufacturer">Hersteller:</label>
-        <input type="text" id="manufacturer" required placeholder="z.B. Sorotec">
+<div class="top-glow"></div>
 
-        <label for="series">Baureihe (optional):</label>
-        <input type="text" id="series" placeholder="z.B. Basic-Line">
+<div class="app">
 
-        <label for="model">Modell (optional):</label>
-        <input type="text" id="model" placeholder="z.B. Basic-Line 0605">
+    <!-- HEADER -->
 
-        <label for="variant">Variante (optional):</label>
-        <input type="text" id="variant" placeholder="z.B. Standard / Performance Kit">
+    <header class="header">
 
-        <label for="source_url">Hersteller-/Quellseite (optional):</label>
-        <input type="url" id="source_url" placeholder="https://...">
+        <div>
+            <div class="eyebrow">
+                <span class="pulse"></span>
+                CNC RESEARCH NETWORK
+            </div>
 
-        <button type="button" onclick="addEntry()">Zur Queue hinzufügen</button>
-        <button type="button" onclick="downloadQueue()">research_queue.json herunterladen</button>
-    </form>
+            <h1>Research<br>Control.</h1>
 
-    <h3>Research-Eingaben</h3>
-    <textarea id="jsonOutput" readonly></textarea>
+            <div class="subtitle">
+                Maschinen, Hersteller und Baureihen für die zentrale
+                Research-Pipeline erfassen. Schnell. Strukturiert.
+                Reproduzierbar.
+            </div>
+        </div>
+
+        <div class="system-status">
+            <div class="status-label">
+                System Status
+            </div>
+
+            <div class="status-value">
+                ● QUEUE ONLINE
+            </div>
+        </div>
+
+    </header>
+
+
+    <!-- CONTENT -->
+
+    <main class="grid">
+
+        <!-- INPUT -->
+
+        <section class="card">
+
+            <div class="card-title">
+                <h2>Neue Research-Eingabe</h2>
+                <div class="card-number">01</div>
+            </div>
+
+
+            <form id="machineForm">
+
+                <div class="field">
+
+                    <label for="manufacturer">
+                        Hersteller <span class="required">*</span>
+                    </label>
+
+                    <input
+                        type="text"
+                        id="manufacturer"
+                        required
+                        placeholder="z.B. Sorotec"
+                        autocomplete="off"
+                    >
+
+                </div>
+
+
+                <div class="field">
+
+                    <label for="series">
+                        Baureihe
+                    </label>
+
+                    <input
+                        type="text"
+                        id="series"
+                        placeholder="z.B. Basic-Line"
+                        autocomplete="off"
+                    >
+
+                </div>
+
+
+                <div class="field">
+
+                    <label for="model">
+                        Modell
+                    </label>
+
+                    <input
+                        type="text"
+                        id="model"
+                        placeholder="z.B. Basic-Line 0605"
+                        autocomplete="off"
+                    >
+
+                </div>
+
+
+                <div class="field">
+
+                    <label for="variant">
+                        Variante
+                    </label>
+
+                    <input
+                        type="text"
+                        id="variant"
+                        placeholder="Standard / Performance Kit"
+                        autocomplete="off"
+                    >
+
+                </div>
+
+
+                <div class="field">
+
+                    <label for="source_url">
+                        Hersteller / Quellseite
+                    </label>
+
+                    <input
+                        type="url"
+                        id="source_url"
+                        placeholder="https://..."
+                        autocomplete="off"
+                    >
+
+                </div>
+
+
+                <div class="actions">
+
+                    <button
+                        type="button"
+                        class="primary"
+                        onclick="addEntry()"
+                    >
+                        ＋ Queue hinzufügen
+                    </button>
+
+                    <button
+                        type="button"
+                        class="secondary"
+                        onclick="downloadQueue()"
+                    >
+                        ↓ JSON exportieren
+                    </button>
+
+                </div>
+
+            </form>
+
+        </section>
+
+
+        <!-- QUEUE -->
+
+        <section class="card">
+
+            <div class="queue-header">
+
+                <div class="card-title" style="margin:0;">
+                    <h2>Research Queue</h2>
+                    <div class="card-number">02</div>
+                </div>
+
+                <div
+                    class="queue-count"
+                    id="queueCount"
+                >
+                    0 ENTRIES
+                </div>
+
+            </div>
+
+
+            <textarea
+                id="jsonOutput"
+                readonly
+                spellcheck="false"
+            ></textarea>
+
+
+            <div
+                class="empty"
+                id="emptyState"
+            >
+                <div class="empty-icon">⌘</div>
+
+                <div class="empty-text">
+                    NO RESEARCH DATA<br>
+                    <span>Queue wartet auf Eingaben</span>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <div class="footer">
+        <span>CNC PORTALFRÄSEN // RESEARCH ENGINE</span>
+        <span>LOCAL QUEUE • JSON OUTPUT</span>
+    </div>
+
 </div>
 
+
+<div
+    class="toast"
+    id="toast"
+>
+    ✓ Entry zur Research Queue hinzugefügt
+</div>
+
+
 <script>
+
     let entries = [];
 
-    function downloadQueue() {\n        const blob = new Blob([JSON.stringify({ entries }, null, 2)], { type: "application/json" });\n        const url = URL.createObjectURL(blob);\n        const a = document.createElement("a");\n        a.href = url;\n        a.download = "research_queue.json";\n        a.click();\n        URL.revokeObjectURL(url);\n    }\n\n    function addEntry() {
-        const manufacturer = document.getElementById('manufacturer').value.trim();
-        const series = document.getElementById('series').value.trim();
-        const model = document.getElementById('model').value.trim();
-        const variant = document.getElementById('variant').value.trim() || "Standard";
-        const sourceUrl = document.getElementById('source_url').value.trim();
 
-        if (!manufacturer) return;
+    /*
+     * JSON DOWNLOAD
+     */
+
+    function downloadQueue() {
+
+        if (!entries.length) {
+            showToast("⚠ Queue ist noch leer");
+            return;
+        }
+
+        const blob = new Blob(
+            [
+                JSON.stringify(
+                    { entries },
+                    null,
+                    2
+                )
+            ],
+            {
+                type: "application/json"
+            }
+        );
+
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement("a");
+
+        a.href = url;
+        a.download = "research_queue.json";
+
+        document.body.appendChild(a);
+
+        a.click();
+
+        a.remove();
+
+        URL.revokeObjectURL(url);
+
+        showToast("✓ research_queue.json exportiert");
+    }
+
+
+    /*
+     * ADD ENTRY
+     */
+
+    function addEntry() {
+
+        const manufacturer =
+            document
+                .getElementById("manufacturer")
+                .value
+                .trim();
+
+        const series =
+            document
+                .getElementById("series")
+                .value
+                .trim();
+
+        const model =
+            document
+                .getElementById("model")
+                .value
+                .trim();
+
+        const variant =
+            document
+                .getElementById("variant")
+                .value
+                .trim() || "Standard";
+
+        const sourceUrl =
+            document
+                .getElementById("source_url")
+                .value
+                .trim();
+
+
+        if (!manufacturer) {
+
+            document
+                .getElementById("manufacturer")
+                .focus();
+
+            showToast("⚠ Hersteller erforderlich");
+
+            return;
+        }
+
 
         const entry = {
+
             id: Date.now().toString(),
-            manufacturer_name: manufacturer,
-            series: series || null,
-            model: model || null,
-            variant: variant,
-            source_url: sourceUrl || null,
-            status: (!series && !model) ? "pending_discovery" : "pending_machine",
-            added_at: new Date().toISOString().split('T')[0]
+
+            manufacturer_name:
+                manufacturer,
+
+            series:
+                series || null,
+
+            model:
+                model || null,
+
+            variant:
+                variant,
+
+            source_url:
+                sourceUrl || null,
+
+            status:
+                (!series && !model)
+                    ? "pending_discovery"
+                    : "pending_machine",
+
+            added_at:
+                new Date()
+                    .toISOString()
+                    .split("T")[0]
         };
 
+
         entries.push(entry);
-        document.getElementById('jsonOutput').value = JSON.stringify(entries, null, 2);
-        document.getElementById('machineForm').reset();
+
+
+        updateQueue();
+
+
+        document
+            .getElementById("machineForm")
+            .reset();
+
+
+        document
+            .getElementById("manufacturer")
+            .focus();
+
+
+        showToast("✓ Entry zur Research Queue hinzugefügt");
     }
+
+
+    /*
+     * UPDATE UI
+     */
+
+    function updateQueue() {
+
+        const output =
+            document.getElementById("jsonOutput");
+
+        output.value =
+            JSON.stringify(
+                entries,
+                null,
+                2
+            );
+
+
+        document
+            .getElementById("queueCount")
+            .textContent =
+                `${entries.length} ${
+                    entries.length === 1
+                        ? "ENTRY"
+                        : "ENTRIES"
+                }`;
+
+
+        document
+            .getElementById("emptyState")
+            .style.display =
+                entries.length
+                    ? "none"
+                    : "flex";
+    }
+
+
+    /*
+     * TOAST
+     */
+
+    let toastTimer;
+
+    function showToast(message) {
+
+        const toast =
+            document.getElementById("toast");
+
+        toast.textContent = message;
+
+        toast.classList.add("show");
+
+        clearTimeout(toastTimer);
+
+        toastTimer =
+            setTimeout(() => {
+
+                toast.classList.remove("show");
+
+            }, 2200);
+    }
+
+
+    /*
+     * CTRL + ENTER
+     * Add entry via keyboard
+     */
+
+    document
+        .getElementById("machineForm")
+        .addEventListener(
+            "keydown",
+            function(event) {
+
+                if (
+                    event.ctrlKey &&
+                    event.key === "Enter"
+                ) {
+
+                    event.preventDefault();
+
+                    addEntry();
+                }
+
+            }
+        );
+
+
+    /*
+     * INITIAL STATE
+     */
+
+    updateQueue();
+
 </script>
+
 </body>
 </html>
+```
