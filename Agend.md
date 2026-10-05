@@ -1,47 +1,92 @@
-# AGENDA: Automatisiertes Portalfräsmaschinen-Research
+# AGENDA: Portalfräsmaschinen-Research
 
-## Ziel
-Systematische Aufarbeitung des deutschen Portalfräsmaschinen-Marktes. Jeder KI-Durchlauf bearbeitet **exakt eine logische Aufgabe** und schließt dann ab.
+## Grundprinzip
 
----
+Jeder KI-Durchlauf erledigt **genau einen logischen Task** und endet danach.
 
-## EINSATZ-ROUTINE (Verzweigung bei jedem Start)
-
-Prüfe bei jedem neuen Start als Erstes die Datei `machines_backlog.json`:
+Beim Start immer zuerst `machines_backlog.json` prüfen.
 
 ---
 
-### PFAD A: Neuer Hersteller/Eingabe vorhanden (`pending_discovery`)
-Wenn in `incoming_queue` ein Eintrag mit `status = "pending_discovery"` liegt:
+## 1. Neue Eingabe aus der HTML?
 
-1. **Recherche:** Starte eine Marktrecherche für diesen Hersteller (`manufacturer_name` / `source_url`).
-2. **Modellerfassung:** Identifiziere ALLE vom Hersteller angebotenen Baureihen und Modelle für den deutschen Markt.
-3. **Backlog aktualisieren:**
-   - Füge jede gefundene Maschine mit `status = "open"` in das Feld `machines` der `machines_backlog.json` ein.
-   - Ändere den Status des Herstellers in `incoming_queue` auf `"processed"`.
-4. **Beenden & Nachfragen:**
-   - Melde kurz, welche neuen Modelle in das Backlog eingetragen wurden.
-   - **Stelle die Frage:** *"Soll ich jetzt mit der Detailrecherche der nächsten offenen Maschine beginnen?"*
+Die HTML dient als Eingang für neue Hersteller oder eine konkrete Maschine.
+
+### A. Nur Hersteller eingetragen
+
+Wenn eine neue Eingabe **nur einen Hersteller** enthält:
+
+1. Den Hersteller recherchieren.
+2. Alle vom Hersteller angebotenen Portalfräsmaschinen/Baureihen/Modelle für den relevanten Markt erfassen.
+3. Für **jede einzelne Maschine** einen Eintrag in `machines_backlog.json` anlegen.
+4. Jede neu angelegte Maschine bekommt zunächst `status: "open"`.
+5. Den Eingang in `incoming_queue` auf `"processed"` setzen.
+6. Diesen Durchlauf beenden.
+7. Danach fragen: **„Soll ich jetzt mit den Suchen beginnen?“**
+
+Wichtig: Dieser Task recherchiert **nur die Maschinenliste**. Die technischen Detaildaten der einzelnen Maschinen werden noch nicht recherchiert.
+
+### B. Hersteller + Baureihe + Modell eingetragen
+
+Wenn bereits eine konkrete Maschine angegeben wurde:
+
+1. Prüfen, welche Informationen aus Hersteller → Baureihe → Modell bereits bekannt sind.
+2. Die konkrete Maschine eindeutig identifizieren.
+3. Einen passenden Eintrag in `machines_backlog.json` anlegen, falls er noch nicht existiert.
+4. Den Status auf `"open"` setzen.
+5. Diesen Eingabe-Task beenden.
 
 ---
 
-### PFAD B: Keine neuen Hersteller – Nächste offene Maschine abarbeiten
-Wenn keine `pending_discovery`-Einträge vorhanden sind:
+## 2. Keine neue Eingabe: offene Maschine recherchieren
 
-1. **Maschine auswählen:** Wähle aus `machines` den **ersten** Eintrag mit `status = "open"`.
-2. **Detail-Recherche:** Recherche alle technischen Parameter für genau diese Maschine (Abmessungen, Verfahrwege, Vorschub, Spindel, Steuerung, Werkzeugwechsler, Schaumstoffeignung usw.).
-3. **Ergebnis abspeichern:**
-   - Speichere den Datensatz als JSON-Datei unter: `./data/{MANUFACTURER}/{SERIES}/{MODEL}.json`.
-4. **Backlog aktualisieren:**
-   - Setze den `status` dieser Maschine in `machines_backlog.json` auf `"completed"`.
-   - Trage den Pfad zur Datei unter `data_file` ein.
-5. **Beenden & Nachfragen:**
-   - Gib eine kurze Zusammenfassung der recherchierten Daten dieser einen Maschine aus.
-   - **Stelle die Frage:** *"Maschine [Name] ist fertig gespeichert. Soll ich die nächste offene Maschine aus dem Backlog recherchieren?"*
+Wenn keine neue Eingabe vorhanden ist:
+
+1. In `machines_backlog.json` nach der nächsten Maschine mit `status: "open"` suchen.
+2. **Genau eine Maschine** auswählen.
+3. Alle verfügbaren technischen Daten für diese Maschine recherchieren.
+4. Das Ergebnis unter `./data/{MANUFACTURER}/{SERIES}/{MODEL}.json` speichern.
+5. Den Status der Maschine in `machines_backlog.json` auf `"completed"` setzen.
+6. `data_file` auf den erzeugten Dateipfad setzen.
+7. Diesen Durchlauf beenden.
+8. Danach fragen: **„Maschine [Name] ist fertig. Soll ich die nächste offene Maschine recherchieren?“**
+
+Wenn der Benutzer „ja“ sagt, wird genau eine weitere offene Maschine bearbeitet.
 
 ---
 
-## HARTE RECHERCHE-REGELN
-* **Nicht Schätzen:** Fehlt ein Parameter in allen offiziellen Quellen/Datenblättern, wird er im JSON strikt als `null` eingetragen.
-* **Keine Spekulationen:** Modellnamen oder Bilder dürfen nicht für technische Parameter herangezogen werden.
-* **Einheiten:** Geschwindigkeiten immer in mm/min, Leistungen in W und kW.
+## 3. Wenn keine offenen Maschinen vorhanden sind
+
+Wenn weder neue Eingaben noch Maschinen mit `status: "open"` vorhanden sind:
+
+- Melden, dass das Backlog aktuell vollständig abgearbeitet ist.
+- Keine Recherche starten.
+
+---
+
+## Statusmodell
+
+Für `incoming_queue`:
+
+- `pending_discovery` = neuer Hersteller muss als Maschinenliste recherchiert werden
+- `pending_machine` = konkrete Maschine muss ins Backlog übernommen werden
+- `processed` = Eingang wurde verarbeitet
+
+Für `machines`:
+
+- `open` = technische Detailrecherche steht noch aus
+- `completed` = technische Detailrecherche wurde gespeichert
+
+Es gibt **keinen TODO-Status**.
+
+---
+
+## Harte Recherche-Regeln
+
+- Nicht schätzen.
+- Fehlt ein Parameter in den verfügbaren Quellen, wird er als `null` gespeichert.
+- Hersteller-/Baureiheninformationen dürfen zur Einordnung verwendet werden, aber technische Werte müssen zur konkreten Maschine passen.
+- Pro KI-Durchlauf nur **einen** Task erledigen.
+- Nach Abschluss eines Tasks immer stoppen und auf die nächste Anweisung/Bestätigung warten.
+- Ein Hersteller-Discovery-Task erzeugt nur Backlog-Einträge; er erledigt nicht gleichzeitig die Detailrecherche aller Maschinen.
+- Geschwindigkeiten immer in mm/min, Leistungen in W bzw. kW.
