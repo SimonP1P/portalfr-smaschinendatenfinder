@@ -18,7 +18,7 @@
 <body>
 <div class="container">
     <h2>Neue Research-Eingabe</h2>
-    <p class="hint">Nur Hersteller ausfüllen = alle Maschinen des Herstellers recherchieren. Baureihe und Modell ausfüllen = konkrete Maschine ins Backlog aufnehmen.</p>
+    <p class="hint">Nur Hersteller ausfüllen = Hersteller-Discovery. Baureihe und Modell ausfüllen = konkrete Maschine. Die Eingaben werden als <strong>research_queue.json</strong> heruntergeladen und anschließend ins GitHub-Repository übernommen.</p>
 
     <form id="machineForm">
         <label for="manufacturer">Hersteller:</label>
@@ -36,7 +36,8 @@
         <label for="source_url">Hersteller-/Quellseite (optional):</label>
         <input type="url" id="source_url" placeholder="https://...">
 
-        <button type="button" onclick="addEntry()">Zur Research-Liste hinzufügen</button>
+        <button type="button" onclick="addEntry()">Zur Queue hinzufügen</button>
+        <button type="button" onclick="downloadQueue()">research_queue.json herunterladen</button>
     </form>
 
     <h3>Research-Eingaben</h3>
@@ -46,7 +47,7 @@
 <script>
     let entries = [];
 
-    function addEntry() {
+    function downloadQueue() {\n        const blob = new Blob([JSON.stringify({ entries }, null, 2)], { type: "application/json" });\n        const url = URL.createObjectURL(blob);\n        const a = document.createElement("a");\n        a.href = url;\n        a.download = "research_queue.json";\n        a.click();\n        URL.revokeObjectURL(url);\n    }\n\n    function addEntry() {
         const manufacturer = document.getElementById('manufacturer').value.trim();
         const series = document.getElementById('series').value.trim();
         const model = document.getElementById('model').value.trim();
