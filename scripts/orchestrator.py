@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 
+import concurrent.futures
 import json
 import os
+import shutil
 import subprocess
 import sys
+import time
 from datetime import datetime
 from pathlib import Path
 
@@ -15,6 +18,20 @@ RESEARCHER_PROMPT = ROOT / "AGENT_RESEARCHER.md"
 TASK_DIR = ROOT / "tasks" / "current"
 COMPLETED_TASK_DIR = ROOT / "tasks" / "completed"
 STATE_FILE = ROOT / "state" / "orchestrator_state.json"
+
+# Dauerbetrieb:
+# - MAX_WORKERS begrenzt die Anzahl paralleler Researcher.
+# - MAX_CPU_PERCENT ist eine Sicherheitsgrenze; standardmäßig bleiben 10 % Reserve.
+# - MAX_MEMORY_PERCENT funktioniert, wenn psutil installiert ist.
+MAX_WORKERS = int(os.getenv("MAX_WORKERS", str(max(1, (os.cpu_count() or 2) - 1))))
+MAX_CPU_PERCENT = float(os.getenv("MAX_CPU_PERCENT", "90"))
+MAX_MEMORY_PERCENT = float(os.getenv("MAX_MEMORY_PERCENT", "85"))
+POLL_SECONDS = float(os.getenv("ORCHESTRATOR_POLL_SECONDS", "2"))
+
+try:
+    import psutil
+except ImportError:
+    psutil = None
 
 
 def now():
@@ -102,23 +119,61 @@ def create_task(machine):
     return path
 
 
+def find_open_machines(backlog, limit):
+    return [
+        m for m in backlog.get("machines", [])
+        if m.get("status") == "open"
+    ][:limit]
+
+
 def find_open_machine(backlog):
-    return next(
-        (m for m in backlog.get("machines", []) if m.get("status") == "open"),
-        None,
-    )
+    machines = find_open_machines(backlog, 1)
+    return machines[0] if machines else None
 
 
-def set_status(backlog, machine_id, status):
+def set_status(backlog, machine_id, status, worker_id=None):
     for machine in backlog["machines"]:
         if machine["id"] == machine_id:
             machine["status"] = status
+            if worker_id is not None:
+                machine["worker_id"] = worker_id
+            elif status in {"completed", "needs_review", "failed"}:
+                machine.pop("worker_id", None)
             backlog["last_updated"] = now()[:10]
             return
     raise KeyError(machine_id)
 
 
-def process_queue_entry(queue, backlog, entry):
+def resource_usage():
+    cpu = os.getloadavg()[0] / max(1, os.cpu_count() or 1) * 100
+    memory = None
+
+    if psutil is not None:
+        cpu = psutil.cpu_percent(interval=0.1)
+        memory = psutil.virtual_memory().percent
+
+    return cpu, memory
+
+
+def can_start_worker(active_count):
+    if active_count >= MAX_WORKERS:
+        return False
+
+    cpu, memory = resource_usage()
+
+    if cpu >= MAX_CPU_PERCENT:
+        return False
+
+    if memory is not None and memory >= MAX_MEMORY_PERCENT:
+        return False
+
+    return True
+
+
+def process_queue_entry(entry):
+    queue = load_json(QUEUE_FILE)
+    backlog = load_json(BACKLOG_FILE)
+
     prompt = f"""Du bist der Master-Agent.
 
 Lies AGENT_MASTER.md.
@@ -150,24 +205,18 @@ Nach erfolgreicher Verarbeitung:
         agent="master",
     )
 
-    # The Master owns the queue mutation. Reload to verify the result.
     refreshed = load_json(QUEUE_FILE)
     for item in refreshed.get("entries", []):
-        if item.get("id") == entry.get("id") and item.get("status", "").startswith("pending"):
+        if (
+            item.get("id") == entry.get("id")
+            and item.get("status", "").startswith("pending")
+        ):
             raise RuntimeError("Master did not process the queue entry")
 
 
-def process_machine(machine, backlog):
+def research_machine(machine):
     task_file = create_task(machine)
-    set_status(backlog, machine["id"], "researching")
-    save_json(BACKLOG_FILE, backlog)
-
-    update_state(
-        status="running",
-        current_task="machine_research",
-        current_machine=machine["id"],
-        current_started_at=now(),
-    )
+    worker_id = machine.get("worker_id", f"worker-{machine['id']}")
 
     prompt = f"""Bearbeite genau EINE Maschine.
 
@@ -189,54 +238,66 @@ Wenn die Recherche abgeschlossen ist, stoppe sofort.
             model=os.getenv("RESEARCHER_MODEL"),
             agent="researcher",
         )
+        return {
+            "machine": machine,
+            "task_file": task_file,
+            "worker_id": worker_id,
+            "ok": True,
+            "error": None,
+        }
     except Exception as exc:
+        return {
+            "machine": machine,
+            "task_file": task_file,
+            "worker_id": worker_id,
+            "ok": False,
+            "error": str(exc),
+        }
+
+
+def validate_and_finish(result, backlog):
+    machine = result["machine"]
+    task_file = result["task_file"]
+
+    if not result["ok"]:
         set_status(backlog, machine["id"], "failed")
         save_json(BACKLOG_FILE, backlog)
-        update_state(status="failed", last_error=str(exc), current_machine=None)
-        raise
+        return "failed"
 
     target = ROOT / machine["data_file"]
-
     validator = subprocess.run(
-        [sys.executable, str(ROOT / "scripts" / "validate_machine.py"), str(target)],
+        [
+            sys.executable,
+            str(ROOT / "scripts" / "validate_machine.py"),
+            str(target),
+        ],
         cwd=ROOT,
         text=True,
         capture_output=True,
     )
 
-    print(validator.stdout)
+    if validator.stdout:
+        print(validator.stdout)
 
     if validator.returncode != 0:
         set_status(backlog, machine["id"], "needs_review")
         save_json(BACKLOG_FILE, backlog)
-        update_state(
-            status="needs_review",
-            current_machine=None,
-            validation_output=validator.stdout + validator.stderr,
-        )
-        return
+        return "needs_review"
 
     set_status(backlog, machine["id"], "completed")
     save_json(BACKLOG_FILE, backlog)
 
     completed = COMPLETED_TASK_DIR / task_file.name
     completed.parent.mkdir(parents=True, exist_ok=True)
-    task_file.replace(completed)
+    if task_file.exists():
+        task_file.replace(completed)
 
-    update_state(
-        status="idle",
-        current_task=None,
-        current_machine=None,
-        last_completed_machine=machine["id"],
-        last_completed_at=now(),
-    )
+    return "completed"
 
 
-def main():
+def process_one_legacy():
     queue = load_json(QUEUE_FILE)
     backlog = load_json(BACKLOG_FILE)
-
-    update_state(status="starting", started_at=now())
 
     pending = [
         e for e in queue.get("entries", [])
@@ -245,8 +306,12 @@ def main():
 
     if pending:
         entry = pending[0]
-        update_state(status="running", current_task="queue", current_queue_id=entry["id"])
-        process_queue_entry(queue, backlog, entry)
+        update_state(
+            status="running",
+            current_task="queue",
+            current_queue_id=entry["id"],
+        )
+        process_queue_entry(entry)
         update_state(status="idle", current_task=None, current_queue_id=None)
         print("One queue task completed. Stopping.")
         return 0
@@ -258,10 +323,155 @@ def main():
         print("No open machines.")
         return 0
 
-    print(f"Researching exactly one machine: {machine['id']}")
-    process_machine(machine, backlog)
-    print("One machine task completed. Stopping.")
+    machine["worker_id"] = "single-worker"
+    set_status(backlog, machine["id"], "researching", "single-worker")
+    save_json(BACKLOG_FILE, backlog)
+
+    result = research_machine(machine)
+    status = validate_and_finish(result, backlog)
+    print(f"Machine {machine['id']} -> {status}")
     return 0
+
+
+def daemon():
+    print("========================================")
+    print(" Portalfräsen Research Orchestrator")
+    print(" DAEMON MODE")
+    print("========================================")
+    print(f"MAX_WORKERS={MAX_WORKERS}")
+    print(f"MAX_CPU_PERCENT={MAX_CPU_PERCENT}")
+    print(f"MAX_MEMORY_PERCENT={MAX_MEMORY_PERCENT}")
+    print("Stoppen: Ctrl+C")
+    print()
+
+    update_state(
+        status="daemon",
+        mode="daemon",
+        started_at=now(),
+        max_workers=MAX_WORKERS,
+        max_cpu_percent=MAX_CPU_PERCENT,
+        max_memory_percent=MAX_MEMORY_PERCENT,
+        active_workers=[],
+    )
+
+    active = {}
+
+    try:
+        while True:
+            # Queue zuerst abarbeiten. So können neue Maschinen entdeckt werden,
+            # bevor der nächste Worker-Pool aufgefüllt wird.
+            queue = load_json(QUEUE_FILE)
+            pending = [
+                e for e in queue.get("entries", [])
+                if e.get("status", "").startswith("pending")
+            ]
+
+            if pending and not active:
+                entry = pending[0]
+                print(f"[MASTER] Queue task: {entry.get('id')}")
+                update_state(
+                    status="daemon",
+                    current_task="queue",
+                    current_queue_id=entry.get("id"),
+                    active_workers=[],
+                )
+                try:
+                    process_queue_entry(entry)
+                except Exception as exc:
+                    print(f"[MASTER] Fehler: {exc}", file=sys.stderr)
+                    update_state(last_error=str(exc))
+                continue
+
+            backlog = load_json(BACKLOG_FILE)
+
+            # Neue Worker reservieren, bevor Prozesse gestartet werden.
+            free_slots = MAX_WORKERS - len(active)
+            candidates = find_open_machines(backlog, max(0, free_slots))
+
+            reserved = []
+            for machine in candidates:
+                if not can_start_worker(len(active)):
+                    break
+
+                worker_id = f"worker-{machine['id']}-{int(time.time())}"
+                machine["worker_id"] = worker_id
+                machine["started_at"] = now()
+                set_status(backlog, machine["id"], "researching", worker_id)
+                reserved.append(machine)
+
+            if reserved:
+                save_json(BACKLOG_FILE, backlog)
+
+            for machine in reserved:
+                print(
+                    f"[START] {machine['id']} "
+                    f"({len(active) + 1}/{MAX_WORKERS})"
+                )
+                future = executor.submit(research_machine, machine)
+                active[future] = machine
+
+            if active:
+                done, _ = concurrent.futures.wait(
+                    list(active.keys()),
+                    timeout=POLL_SECONDS,
+                    return_when=concurrent.futures.FIRST_COMPLETED,
+                )
+
+                for future in done:
+                    machine = active.pop(future)
+                    try:
+                        result = future.result()
+                        status = validate_and_finish(result, backlog)
+                        print(f"[DONE] {machine['id']} -> {status}")
+                    except Exception as exc:
+                        print(
+                            f"[ERROR] {machine['id']}: {exc}",
+                            file=sys.stderr,
+                        )
+                        set_status(backlog, machine["id"], "failed")
+                        save_json(BACKLOG_FILE, backlog)
+
+            cpu, memory = resource_usage()
+            active_ids = [m["id"] for m in active.values()]
+            update_state(
+                status="daemon",
+                mode="daemon",
+                active_workers=active_ids,
+                active_count=len(active_ids),
+                cpu_percent=round(cpu, 1),
+                memory_percent=round(memory, 1) if memory is not None else None,
+                max_workers=MAX_WORKERS,
+            )
+
+            if not active and not pending and not find_open_machine(backlog):
+                print("[IDLE] Keine offenen Maschinen. Warte auf neue Jobs...")
+                time.sleep(POLL_SECONDS)
+            elif not reserved and not done:
+                time.sleep(POLL_SECONDS)
+
+    except KeyboardInterrupt:
+        print("\n[STOP] Daemon wird beendet. Laufende Worker werden abgewartet...")
+        for future in active:
+            future.result()
+        update_state(status="stopped", stopped_at=now(), active_workers=[])
+        return 0
+
+
+def main():
+    mode = "--daemon" if "--daemon" in sys.argv else "--once"
+
+    if mode == "--daemon":
+        global executor
+        executor = concurrent.futures.ThreadPoolExecutor(
+            max_workers=MAX_WORKERS,
+            thread_name_prefix="researcher",
+        )
+        try:
+            return daemon()
+        finally:
+            executor.shutdown(wait=True)
+
+    return process_one_legacy()
 
 
 if __name__ == "__main__":
