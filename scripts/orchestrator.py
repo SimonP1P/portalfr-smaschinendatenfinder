@@ -341,6 +341,8 @@ def daemon():
     print(f"MAX_WORKERS={MAX_WORKERS}")
     print(f"MAX_CPU_PERCENT={MAX_CPU_PERCENT}")
     print(f"MAX_MEMORY_PERCENT={MAX_MEMORY_PERCENT}")
+    print("Pipeline: Python -> Researcher -> Validator")
+    print("Master: nur fuer Discovery/Queue, wenn keine offenen Maschinen vorhanden sind")
     print("Stoppen: Ctrl+C")
     print()
 
@@ -358,33 +360,10 @@ def daemon():
 
     try:
         while True:
-            # Queue zuerst abarbeiten. So können neue Maschinen entdeckt werden,
-            # bevor der nächste Worker-Pool aufgefüllt wird.
-            queue = load_json(QUEUE_FILE)
-            pending = [
-                e for e in queue.get("entries", [])
-                if e.get("status", "").startswith("pending")
-            ]
-
-            if pending and not active:
-                entry = pending[0]
-                print(f"[MASTER] Queue task: {entry.get('id')}")
-                update_state(
-                    status="daemon",
-                    current_task="queue",
-                    current_queue_id=entry.get("id"),
-                    active_workers=[],
-                )
-                try:
-                    process_queue_entry(entry)
-                except Exception as exc:
-                    print(f"[MASTER] Fehler: {exc}", file=sys.stderr)
-                    update_state(last_error=str(exc))
-                continue
-
             backlog = load_json(BACKLOG_FILE)
 
-            # Neue Worker reservieren, bevor Prozesse gestartet werden.
+            # Offene Maschinen haben immer Vorrang.
+            # Der Master darf den Researcher-Pool niemals blockieren.
             free_slots = MAX_WORKERS - len(active)
             candidates = find_open_machines(backlog, max(0, free_slots))
 
@@ -410,6 +389,32 @@ def daemon():
                 future = executor.submit(research_machine, machine)
                 active[future] = machine
 
+            # Nur wenn aktuell keine Maschine bearbeitet wird und auch keine
+            # offene Maschine vorhanden ist, darf eine Queue-/Discovery-Aufgabe
+            # den Master verwenden. Dadurch bleibt der Massenbetrieb entkoppelt.
+            queue = load_json(QUEUE_FILE)
+            pending = [
+                e for e in queue.get("entries", [])
+                if e.get("status", "").startswith("pending")
+            ]
+
+            if not active and not reserved and not find_open_machine(backlog) and pending:
+                entry = pending[0]
+                print(f"[MASTER] Queue task: {entry.get('id')}")
+                update_state(
+                    status="daemon",
+                    current_task="queue",
+                    current_queue_id=entry.get("id"),
+                    active_workers=[],
+                )
+                try:
+                    process_queue_entry(entry)
+                except Exception as exc:
+                    print(f"[MASTER] Fehler: {exc}", file=sys.stderr)
+                    update_state(last_error=str(exc))
+                continue
+
+            done = set()
             if active:
                 done, _ = concurrent.futures.wait(
                     list(active.keys()),
@@ -441,6 +446,7 @@ def daemon():
                 cpu_percent=round(cpu, 1),
                 memory_percent=round(memory, 1) if memory is not None else None,
                 max_workers=MAX_WORKERS,
+                pipeline="python-researcher-validator",
             )
 
             if not active and not pending and not find_open_machine(backlog):
@@ -455,7 +461,6 @@ def daemon():
             future.result()
         update_state(status="stopped", stopped_at=now(), active_workers=[])
         return 0
-
 
 def main():
     mode = "--daemon" if "--daemon" in sys.argv else "--once"
