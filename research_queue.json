@@ -1,3 +1,14 @@
 {
-  "entries": []
+  "entries": [
+  {
+    "id": "1791216256009",
+    "manufacturer_name": "Zimmermann",
+    "series": null,
+    "model": null,
+    "variant": "Standard",
+    "source_url": null,
+    "status": "pending_discovery",
+    "added_at": "2026-10-05"
+  }
+]
 }
