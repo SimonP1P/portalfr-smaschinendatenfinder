@@ -1,14 +1,24 @@
 {
   "entries": [
-  {
-    "id": "1791216256009",
-    "manufacturer_name": "Zimmermann",
-    "series": null,
-    "model": null,
-    "variant": "Standard",
-    "source_url": null,
-    "status": "pending_discovery",
-    "added_at": "2026-10-05"
-  }
-]
+    {
+      "id": "1791216256009",
+      "manufacturer_name": "Zimmermann",
+      "series": null,
+      "model": null,
+      "variant": "Standard",
+      "source_url": null,
+      "status": "pending_discovery",
+      "added_at": "2026-10-05"
+    },
+    {
+      "id": "1791221911651",
+      "manufacturer_name": "Waldrich Coburg",
+      "series": null,
+      "model": null,
+      "variant": "Standard",
+      "source_url": null,
+      "status": "pending_discovery",
+      "added_at": "2026-10-05"
+    }
+  ]
 }

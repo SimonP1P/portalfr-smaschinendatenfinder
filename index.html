@@ -1,37 +1,61 @@
+```html
 <!DOCTYPE html>
 <html lang="de">
+
 <head>
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
     <title>CNC Research Control</title>
 
+
     <style>
+
         * {
             box-sizing: border-box;
         }
 
+
         :root {
+
             --bg: #05070a;
-            --panel: rgba(13, 17, 23, 0.78);
-            --panel-2: rgba(18, 24, 32, 0.72);
+
+            --panel: rgba(13, 17, 23, 0.82);
+
             --border: rgba(255,255,255,0.09);
+
             --text: #f4f7fb;
+
             --muted: #8993a3;
+
             --cyan: #00e5ff;
+
             --blue: #3b82f6;
+
             --green: #00ff9d;
+
             --purple: #9b5cff;
+
             --danger: #ff4d6d;
         }
+
 
         html {
             scroll-behavior: smooth;
         }
 
+
         body {
+
             margin: 0;
+
             min-height: 100vh;
+
             font-family:
                 Inter,
                 ui-sans-serif,
@@ -44,98 +68,150 @@
             color: var(--text);
 
             background:
+
                 radial-gradient(
                     circle at 15% 10%,
                     rgba(0,229,255,0.12),
                     transparent 28%
                 ),
+
                 radial-gradient(
                     circle at 85% 80%,
                     rgba(155,92,255,0.13),
                     transparent 30%
                 ),
+
                 #05070a;
 
             overflow-x: hidden;
         }
 
+
         /* CNC GRID */
 
         body::before {
+
             content: "";
+
             position: fixed;
+
             inset: 0;
+
             pointer-events: none;
+
             opacity: 0.22;
 
             background-image:
-                linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+
+                linear-gradient(
+                    rgba(255,255,255,0.025) 1px,
+                    transparent 1px
+                ),
+
+                linear-gradient(
+                    90deg,
+                    rgba(255,255,255,0.025) 1px,
+                    transparent 1px
+                );
 
             background-size: 40px 40px;
 
-            mask-image: linear-gradient(
-                to bottom,
-                black,
-                transparent 90%
-            );
+            mask-image:
+                linear-gradient(
+                    to bottom,
+                    black,
+                    transparent 90%
+                );
         }
 
-        /* TOP GLOW */
 
         .top-glow {
+
             position: fixed;
+
             width: 700px;
+
             height: 700px;
+
             top: -400px;
+
             left: 50%;
+
             transform: translateX(-50%);
 
-            background: radial-gradient(
-                circle,
-                rgba(0,229,255,0.12),
-                transparent 70%
-            );
+            background:
+                radial-gradient(
+                    circle,
+                    rgba(0,229,255,0.12),
+                    transparent 70%
+                );
 
             pointer-events: none;
         }
+
 
         /* APP */
 
         .app {
-            width: min(1200px, calc(100% - 32px));
+
+            width:
+                min(
+                    1200px,
+                    calc(100% - 32px)
+                );
+
             margin: 50px auto;
+
             position: relative;
+
             z-index: 1;
         }
+
 
         /* HEADER */
 
         .header {
+
             display: flex;
+
             justify-content: space-between;
+
             align-items: flex-end;
+
             gap: 30px;
+
             margin-bottom: 28px;
         }
 
+
         .eyebrow {
+
             display: flex;
+
             align-items: center;
+
             gap: 9px;
 
             font-size: 11px;
+
             font-weight: 800;
+
             letter-spacing: 0.2em;
+
             text-transform: uppercase;
 
             color: var(--cyan);
         }
 
+
         .pulse {
+
             width: 7px;
+
             height: 7px;
+
             border-radius: 50%;
+
             background: var(--green);
 
             box-shadow:
@@ -145,25 +221,40 @@
             animation: pulse 1.8s infinite;
         }
 
+
         @keyframes pulse {
+
             0%,100% {
+
                 box-shadow:
                     0 0 0 5px rgba(0,255,157,0.08),
                     0 0 18px var(--green);
             }
 
             50% {
+
                 box-shadow:
                     0 0 0 10px rgba(0,255,157,0.02),
                     0 0 30px var(--green);
             }
         }
 
+
         h1 {
+
             margin: 9px 0 0;
-            font-size: clamp(34px, 5vw, 64px);
+
+            font-size:
+                clamp(
+                    34px,
+                    5vw,
+                    64px
+                );
+
             line-height: 0.95;
+
             letter-spacing: -0.05em;
+
             font-weight: 900;
 
             background:
@@ -175,60 +266,99 @@
                 );
 
             -webkit-background-clip: text;
+
             background-clip: text;
+
             color: transparent;
         }
 
+
         .subtitle {
+
             max-width: 650px;
+
             margin-top: 15px;
+
             color: var(--muted);
+
             line-height: 1.6;
+
             font-size: 14px;
         }
+
 
         /* STATUS */
 
         .system-status {
+
+            min-width: 210px;
+
             padding: 14px 18px;
-            border: 1px solid var(--border);
-            background: rgba(255,255,255,0.025);
-            backdrop-filter: blur(18px);
+
+            border:
+                1px solid var(--border);
+
+            background:
+                rgba(255,255,255,0.025);
+
+            backdrop-filter:
+                blur(18px);
+
             border-radius: 14px;
-            white-space: nowrap;
         }
 
+
         .status-label {
+
             font-size: 10px;
+
             text-transform: uppercase;
+
             letter-spacing: 0.15em;
+
             color: var(--muted);
         }
 
+
         .status-value {
+
             margin-top: 5px;
+
             font-weight: 800;
+
             color: var(--green);
+
             font-size: 13px;
         }
 
-        /* MAIN GRID */
+
+        /* GRID */
 
         .grid {
+
             display: grid;
-            grid-template-columns: 1fr 0.9fr;
+
+            grid-template-columns:
+                1fr
+                0.9fr;
+
             gap: 18px;
         }
+
 
         /* CARD */
 
         .card {
+
             position: relative;
+
             overflow: hidden;
 
             padding: 26px;
 
-            border: 1px solid var(--border);
+            border:
+                1px solid var(--border);
+
             border-radius: 22px;
 
             background:
@@ -242,167 +372,251 @@
                 0 30px 80px rgba(0,0,0,0.35),
                 inset 0 1px 0 rgba(255,255,255,0.04);
 
-            backdrop-filter: blur(24px);
+            backdrop-filter:
+                blur(24px);
         }
 
+
         .card::before {
+
             content: "";
+
             position: absolute;
+
             width: 250px;
+
             height: 250px;
+
             top: -170px;
+
             right: -100px;
 
-            background: rgba(0,229,255,0.12);
+            background:
+                rgba(0,229,255,0.12);
+
             filter: blur(80px);
+
             pointer-events: none;
         }
 
+
         .card-title {
+
             display: flex;
+
             justify-content: space-between;
+
             align-items: center;
+
             margin-bottom: 24px;
         }
 
+
         .card-title h2 {
+
             margin: 0;
+
             font-size: 17px;
+
             letter-spacing: -0.02em;
         }
 
+
         .card-number {
+
             display: grid;
+
             place-items: center;
 
             width: 32px;
+
             height: 32px;
 
             border-radius: 10px;
 
             color: var(--cyan);
+
             font-size: 12px;
+
             font-weight: 900;
 
-            background: rgba(0,229,255,0.08);
-            border: 1px solid rgba(0,229,255,0.15);
+            background:
+                rgba(0,229,255,0.08);
+
+            border:
+                1px solid rgba(0,229,255,0.15);
         }
+
 
         /* FORM */
 
         .field {
+
             margin-bottom: 17px;
         }
 
+
         label {
+
             display: block;
+
             margin-bottom: 8px;
 
             color: #cbd3df;
 
             font-size: 11px;
+
             font-weight: 800;
 
             letter-spacing: 0.08em;
+
             text-transform: uppercase;
         }
 
+
         .required {
+
             color: var(--cyan);
         }
 
+
         input {
+
             width: 100%;
+
             padding: 14px 15px;
 
             color: var(--text);
+
             font-size: 14px;
 
-            border: 1px solid rgba(255,255,255,0.08);
+            border:
+                1px solid rgba(255,255,255,0.08);
+
             border-radius: 12px;
+
             outline: none;
 
-            background: rgba(0,0,0,0.25);
+            background:
+                rgba(0,0,0,0.25);
 
             transition:
-                border-color 0.2s,
-                box-shadow 0.2s,
-                transform 0.2s;
+                border-color .2s,
+                box-shadow .2s,
+                transform .2s;
         }
 
+
         input::placeholder {
+
             color: #4e5867;
         }
 
+
         input:hover {
-            border-color: rgba(255,255,255,0.15);
+
+            border-color:
+                rgba(255,255,255,0.15);
         }
 
+
         input:focus {
-            border-color: var(--cyan);
+
+            border-color:
+                var(--cyan);
 
             box-shadow:
                 0 0 0 3px rgba(0,229,255,0.08),
                 0 0 30px rgba(0,229,255,0.08);
 
-            transform: translateY(-1px);
+            transform:
+                translateY(-1px);
         }
+
 
         /* BUTTONS */
 
         .actions {
+
             display: grid;
-            grid-template-columns: 1fr 1fr;
+
+            grid-template-columns:
+                1fr 1fr;
+
             gap: 10px;
+
             margin-top: 24px;
         }
 
+
         button {
+
             position: relative;
+
             overflow: hidden;
 
             border: none;
+
             border-radius: 12px;
 
             padding: 14px 16px;
 
             font-size: 12px;
+
             font-weight: 900;
+
             letter-spacing: 0.05em;
+
             text-transform: uppercase;
 
             cursor: pointer;
 
             transition:
-                transform 0.2s,
-                box-shadow 0.2s;
+                transform .2s,
+                box-shadow .2s;
         }
+
 
         button::after {
+
             content: "";
+
             position: absolute;
+
             inset: 0;
 
-            background: linear-gradient(
-                110deg,
-                transparent 20%,
-                rgba(255,255,255,0.2),
-                transparent 80%
-            );
+            background:
+                linear-gradient(
+                    110deg,
+                    transparent 20%,
+                    rgba(255,255,255,0.2),
+                    transparent 80%
+                );
 
-            transform: translateX(-120%);
-            transition: transform 0.5s;
+            transform:
+                translateX(-120%);
+
+            transition:
+                transform .5s;
         }
+
 
         button:hover::after {
-            transform: translateX(120%);
+
+            transform:
+                translateX(120%);
         }
+
 
         button:hover {
-            transform: translateY(-2px);
+
+            transform:
+                translateY(-2px);
         }
 
+
         .primary {
+
             color: #001216;
 
             background:
@@ -413,10 +627,36 @@
                 );
 
             box-shadow:
-                0 10px 35px rgba(0,229,255,0.2);
+                0 10px 35px
+                rgba(0,229,255,0.2);
         }
 
+
+        .save-button {
+
+            margin-top: 12px;
+
+            width: 100%;
+
+            color: #00140c;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #74ffc4,
+                    var(--green)
+                );
+
+            box-shadow:
+                0 10px 35px
+                rgba(0,255,157,0.16);
+
+            font-size: 13px;
+        }
+
+
         .secondary {
+
             color: white;
 
             background:
@@ -426,53 +666,102 @@
                     #0e131a
                 );
 
-            border: 1px solid rgba(255,255,255,0.09);
+            border:
+                1px solid rgba(255,255,255,0.09);
         }
+
+
+        /* FILE STATUS */
+
+        .file-status {
+
+            margin-top: 16px;
+
+            padding: 13px 15px;
+
+            border-radius: 12px;
+
+            border:
+                1px solid rgba(255,255,255,0.06);
+
+            background:
+                rgba(0,0,0,0.22);
+
+            font-size: 11px;
+
+            color: var(--muted);
+
+            line-height: 1.5;
+        }
+
+
+        .file-status strong {
+
+            color: var(--green);
+        }
+
 
         /* QUEUE */
 
         .queue-header {
+
             display: flex;
+
             justify-content: space-between;
+
             align-items: center;
 
             margin-bottom: 15px;
         }
 
+
         .queue-count {
+
             padding: 6px 10px;
 
             border-radius: 99px;
 
             font-size: 10px;
+
             font-weight: 900;
 
             color: var(--green);
 
-            background: rgba(0,255,157,0.07);
-            border: 1px solid rgba(0,255,157,0.12);
+            background:
+                rgba(0,255,157,0.07);
+
+            border:
+                1px solid rgba(0,255,157,0.12);
         }
 
+
         textarea {
+
             width: 100%;
+
             height: 440px;
 
             resize: vertical;
 
             padding: 18px;
 
-            border: 1px solid rgba(255,255,255,0.07);
+            border:
+                1px solid rgba(255,255,255,0.07);
+
             border-radius: 15px;
 
             outline: none;
 
             color: #b8f7ff;
+
             background:
+
                 radial-gradient(
                     circle at 90% 10%,
                     rgba(0,229,255,0.06),
                     transparent 25%
                 ),
+
                 #030507;
 
             font-family:
@@ -482,21 +771,31 @@
                 monospace;
 
             font-size: 12px;
+
             line-height: 1.7;
 
             box-shadow:
                 inset 0 0 40px rgba(0,0,0,0.4);
         }
 
-        /* EMPTY STATE */
+
+        /* EMPTY */
 
         .empty {
+
             position: absolute;
-            inset: 100px 30px 30px;
+
+            inset:
+                100px
+                30px
+                30px;
 
             display: flex;
+
             flex-direction: column;
+
             align-items: center;
+
             justify-content: center;
 
             pointer-events: none;
@@ -504,171 +803,276 @@
             opacity: 0.35;
         }
 
+
         .empty-icon {
+
             font-size: 40px;
+
             margin-bottom: 12px;
+
             filter: grayscale(1);
         }
 
+
         .empty-text {
+
             font-size: 12px;
+
             color: var(--muted);
+
             text-align: center;
+
+            line-height: 1.7;
         }
+
 
         /* FOOTER */
 
         .footer {
+
             display: flex;
+
             justify-content: space-between;
 
             margin-top: 18px;
+
             padding: 0 4px;
 
             color: #4f5968;
+
             font-size: 10px;
+
             letter-spacing: 0.08em;
+
             text-transform: uppercase;
         }
+
 
         /* TOAST */
 
         .toast {
+
             position: fixed;
+
             right: 25px;
+
             bottom: 25px;
 
             padding: 13px 17px;
 
             border-radius: 12px;
 
-            background: rgba(13,17,23,0.92);
-            border: 1px solid rgba(0,255,157,0.2);
+            background:
+                rgba(13,17,23,0.95);
+
+            border:
+                1px solid rgba(0,255,157,0.2);
 
             color: var(--green);
 
             font-size: 12px;
+
             font-weight: 800;
 
             box-shadow:
                 0 20px 50px rgba(0,0,0,0.5);
 
-            transform: translateY(30px);
+            transform:
+                translateY(30px);
+
             opacity: 0;
 
-            transition: 0.3s;
+            transition: .3s;
 
             pointer-events: none;
+
             z-index: 100;
         }
 
+
         .toast.show {
-            transform: translateY(0);
+
+            transform:
+                translateY(0);
+
             opacity: 1;
         }
+
 
         /* RESPONSIVE */
 
         @media (max-width: 850px) {
+
             .header {
-                align-items: flex-start;
-                flex-direction: column;
+
+                align-items:
+                    flex-start;
+
+                flex-direction:
+                    column;
             }
 
+
             .system-status {
+
                 width: 100%;
             }
 
+
             .grid {
-                grid-template-columns: 1fr;
+
+                grid-template-columns:
+                    1fr;
             }
 
+
             textarea {
+
                 height: 350px;
             }
         }
 
+
         @media (max-width: 550px) {
+
             .app {
-                width: min(100% - 20px, 1200px);
-                margin: 25px auto;
+
+                width:
+                    calc(100% - 20px);
+
+                margin:
+                    25px auto;
             }
 
+
             .card {
+
                 padding: 20px;
+
                 border-radius: 18px;
             }
 
+
             .actions {
-                grid-template-columns: 1fr;
+
+                grid-template-columns:
+                    1fr;
             }
 
+
             h1 {
+
                 font-size: 42px;
             }
         }
+
     </style>
+
 </head>
+
 
 <body>
 
+
 <div class="top-glow"></div>
 
+
 <div class="app">
+
 
     <!-- HEADER -->
 
     <header class="header">
 
         <div>
+
             <div class="eyebrow">
+
                 <span class="pulse"></span>
+
                 CNC RESEARCH NETWORK
+
             </div>
 
-            <h1>Research<br>Control.</h1>
+
+            <h1>
+                Research<br>
+                Control.
+            </h1>
+
 
             <div class="subtitle">
-                Maschinen, Hersteller und Baureihen für die zentrale
-                Research-Pipeline erfassen. Schnell. Strukturiert.
-                Reproduzierbar.
+
+                Maschinen, Hersteller und Baureihen
+                für die zentrale Research-Pipeline erfassen.
+
+                <br>
+
+                <strong>
+                    Bestehende Queue wird geladen und
+                    anschließend direkt aktualisiert.
+                </strong>
+
             </div>
+
         </div>
 
+
         <div class="system-status">
+
             <div class="status-label">
                 System Status
             </div>
 
-            <div class="status-value">
-                ● QUEUE ONLINE
+            <div
+                class="status-value"
+                id="systemStatus"
+            >
+                ● INITIALISIERE
             </div>
+
         </div>
 
     </header>
+
 
 
     <!-- CONTENT -->
 
     <main class="grid">
 
+
         <!-- INPUT -->
 
         <section class="card">
 
+
             <div class="card-title">
-                <h2>Neue Research-Eingabe</h2>
-                <div class="card-number">01</div>
+
+                <h2>
+                    Neue Research-Eingabe
+                </h2>
+
+                <div class="card-number">
+                    01
+                </div>
+
             </div>
+
 
 
             <form id="machineForm">
 
+
                 <div class="field">
 
                     <label for="manufacturer">
-                        Hersteller <span class="required">*</span>
+
+                        Hersteller
+                        <span class="required">*</span>
+
                     </label>
+
 
                     <input
                         type="text"
@@ -681,11 +1085,13 @@
                 </div>
 
 
+
                 <div class="field">
 
                     <label for="series">
                         Baureihe
                     </label>
+
 
                     <input
                         type="text"
@@ -697,11 +1103,13 @@
                 </div>
 
 
+
                 <div class="field">
 
                     <label for="model">
                         Modell
                     </label>
+
 
                     <input
                         type="text"
@@ -713,11 +1121,13 @@
                 </div>
 
 
+
                 <div class="field">
 
                     <label for="variant">
                         Variante
                     </label>
+
 
                     <input
                         type="text"
@@ -729,11 +1139,13 @@
                 </div>
 
 
+
                 <div class="field">
 
                     <label for="source_url">
                         Hersteller / Quellseite
                     </label>
+
 
                     <input
                         type="url"
@@ -745,50 +1157,115 @@
                 </div>
 
 
+
                 <div class="actions">
+
 
                     <button
                         type="button"
                         class="primary"
                         onclick="addEntry()"
                     >
+
                         ＋ Queue hinzufügen
+
                     </button>
+
 
                     <button
                         type="button"
                         class="secondary"
-                        onclick="downloadQueue()"
+                        onclick="chooseQueueFile()"
                     >
-                        ↓ JSON exportieren
+
+                        📂 Queue öffnen
+
                     </button>
 
                 </div>
+
+
+
+                <!-- HIDDEN FILE INPUT -->
+
+                <input
+                    type="file"
+                    id="queueFile"
+                    accept=".json"
+                    hidden
+                    onchange="loadQueueFile(event)"
+                >
+
+
+
+                <!-- SAVE BUTTON -->
+
+                <button
+                    type="button"
+                    class="save-button"
+                    onclick="saveQueue()"
+                >
+
+                    💾 QUEUE SPEICHERN
+
+                </button>
+
+
+
+                <!-- FILE STATUS -->
+
+                <div
+                    class="file-status"
+                    id="fileStatus"
+                >
+
+                    ⏳ Suche nach bestehender
+                    <strong>.research_queue.json</strong> ...
+
+                </div>
+
 
             </form>
 
         </section>
 
 
+
         <!-- QUEUE -->
 
         <section class="card">
 
+
             <div class="queue-header">
 
-                <div class="card-title" style="margin:0;">
-                    <h2>Research Queue</h2>
-                    <div class="card-number">02</div>
+
+                <div
+                    class="card-title"
+                    style="margin:0;"
+                >
+
+                    <h2>
+                        Research Queue
+                    </h2>
+
+                    <div class="card-number">
+                        02
+                    </div>
+
                 </div>
+
 
                 <div
                     class="queue-count"
                     id="queueCount"
                 >
+
                     0 ENTRIES
+
                 </div>
 
             </div>
+
 
 
             <textarea
@@ -798,139 +1275,496 @@
             ></textarea>
 
 
+
             <div
                 class="empty"
                 id="emptyState"
             >
-                <div class="empty-icon">⌘</div>
+
+                <div class="empty-icon">
+                    ⌘
+                </div>
+
 
                 <div class="empty-text">
-                    NO RESEARCH DATA<br>
-                    <span>Queue wartet auf Eingaben</span>
+
+                    NO RESEARCH DATA
+
+                    <br>
+
+                    <span>
+                        Queue wartet auf Eingaben
+                    </span>
+
                 </div>
+
             </div>
 
+
         </section>
+
 
     </main>
 
 
+
     <div class="footer">
-        <span>CNC PORTALFRÄSEN // RESEARCH ENGINE</span>
-        <span>LOCAL QUEUE • JSON OUTPUT</span>
+
+        <span>
+            CNC PORTALFRÄSEN // RESEARCH ENGINE
+        </span>
+
+        <span>
+            LOCAL FILE • JSON QUEUE
+        </span>
+
     </div>
+
 
 </div>
 
+
+
+<!-- TOAST -->
 
 <div
     class="toast"
     id="toast"
->
-    ✓ Entry zur Research Queue hinzugefügt
-</div>
+></div>
+
 
 
 <script>
 
+
+    /*
+     * =========================================================
+     * CNC RESEARCH QUEUE
+     * =========================================================
+     *
+     * Die Anwendung versucht:
+     *
+     * 1. Einen bestehenden File Handle wiederzuverwenden.
+     * 2. Falls keiner vorhanden ist:
+     *    -> Datei auswählen lassen.
+     * 3. JSON laden.
+     * 4. Neue Einträge hinzufügen.
+     * 5. Dieselbe Datei direkt überschreiben.
+     *
+     * Chrome / Edge unterstützen die File System Access API.
+     *
+     * =========================================================
+     */
+
+
     let entries = [];
+
+    let queueFileHandle = null;
+
 
 
     /*
-     * JSON DOWNLOAD
+     * =========================================================
+     * START
+     * =========================================================
      */
 
-    function downloadQueue() {
+    window.addEventListener(
+        "load",
+        async function() {
 
-        if (!entries.length) {
-            showToast("⚠ Queue ist noch leer");
-            return;
+            updateQueue();
+
+            setStatus(
+                "● BEREIT",
+                "green"
+            );
+
+
+            /*
+             * Wenn File System Access API verfügbar ist,
+             * versuchen wir einen vorhandenen Handle
+             * aus IndexedDB zu laden.
+             */
+
+            if (
+                "showOpenFilePicker" in window &&
+                "showSaveFilePicker" in window
+            ) {
+
+                try {
+
+                    await restoreFileHandle();
+
+                } catch (error) {
+
+                    console.log(
+                        "Kein gespeicherter File Handle."
+                    );
+
+                }
+
+            }
+
+        }
+    );
+
+
+
+    /*
+     * =========================================================
+     * FILE AUSWÄHLEN
+     * =========================================================
+     */
+
+    async function chooseQueueFile() {
+
+
+        /*
+         * Moderne Browser:
+         * direkte Datei-Auswahl
+         */
+
+        if (
+            "showOpenFilePicker" in window
+        ) {
+
+            try {
+
+                const handles =
+                    await window.showOpenFilePicker({
+
+                        multiple: false,
+
+                        types: [
+
+                            {
+                                description:
+                                    "Research Queue JSON",
+
+                                accept: {
+
+                                    "application/json":
+                                        [
+                                            ".json"
+                                        ]
+
+                                }
+
+                            }
+
+                        ]
+
+                    });
+
+
+                queueFileHandle =
+                    handles[0];
+
+
+                await loadFromHandle(
+                    queueFileHandle
+                );
+
+
+                /*
+                 * File Handle merken
+                 */
+
+                await saveFileHandle(
+                    queueFileHandle
+                );
+
+
+                return;
+
+            } catch (error) {
+
+                /*
+                 * Benutzer hat Dialog abgebrochen.
+                 */
+
+                if (
+                    error.name ===
+                    "AbortError"
+                ) {
+
+                    return;
+                }
+
+                console.error(error);
+
+            }
+
         }
 
-        const blob = new Blob(
-            [
-                JSON.stringify(
-                    { entries },
-                    null,
-                    2
-                )
-            ],
-            {
-                type: "application/json"
-            }
-        );
 
-        const url = URL.createObjectURL(blob);
+        /*
+         * Fallback für Browser ohne
+         * File System Access API.
+         */
 
-        const a = document.createElement("a");
+        document
+            .getElementById("queueFile")
+            .click();
 
-        a.href = url;
-        a.download = "research_queue.json";
-
-        document.body.appendChild(a);
-
-        a.click();
-
-        a.remove();
-
-        URL.revokeObjectURL(url);
-
-        showToast("✓ research_queue.json exportiert");
     }
 
 
+
     /*
-     * ADD ENTRY
+     * =========================================================
+     * DATEI LADEN
+     * =========================================================
+     */
+
+    async function loadFromHandle(
+        handle
+    ) {
+
+        try {
+
+            const file =
+                await handle.getFile();
+
+
+            const text =
+                await file.text();
+
+
+            const data =
+                JSON.parse(text);
+
+
+            if (
+                !data.entries ||
+                !Array.isArray(data.entries)
+            ) {
+
+                throw new Error(
+                    "Keine gültige entries-Liste"
+                );
+
+            }
+
+
+            entries =
+                data.entries;
+
+
+            updateQueue();
+
+
+            updateFileStatus(
+                "✓ GELADEN: " +
+                file.name +
+                " — " +
+                entries.length +
+                " Entries",
+                true
+            );
+
+
+            setStatus(
+                "● QUEUE ONLINE",
+                "green"
+            );
+
+
+            showToast(
+                "✓ Queue geladen"
+            );
+
+        } catch (error) {
+
+            console.error(error);
+
+
+            updateFileStatus(
+                "⚠ JSON konnte nicht gelesen werden",
+                false
+            );
+
+
+            setStatus(
+                "● FEHLER",
+                "red"
+            );
+
+
+            showToast(
+                "⚠ Fehler beim Laden der Queue"
+            );
+
+        }
+
+    }
+
+
+
+    /*
+     * =========================================================
+     * FALLBACK FILE INPUT
+     * =========================================================
+     */
+
+    async function loadQueueFile(
+        event
+    ) {
+
+        const file =
+            event.target.files[0];
+
+
+        if (!file) {
+
+            return;
+        }
+
+
+        try {
+
+            const text =
+                await file.text();
+
+
+            const data =
+                JSON.parse(text);
+
+
+            if (
+                !data.entries ||
+                !Array.isArray(data.entries)
+            ) {
+
+                throw new Error(
+                    "Ungültige Queue"
+                );
+
+            }
+
+
+            entries =
+                data.entries;
+
+
+            updateQueue();
+
+
+            updateFileStatus(
+                "✓ GELADEN: " +
+                file.name +
+                " — " +
+                entries.length +
+                " Entries",
+                true
+            );
+
+
+            showToast(
+                "✓ Queue geladen"
+            );
+
+
+        } catch (error) {
+
+            console.error(error);
+
+
+            showToast(
+                "⚠ Ungültige JSON-Datei"
+            );
+
+        }
+
+    }
+
+
+
+    /*
+     * =========================================================
+     * EINTRAG HINZUFÜGEN
+     * =========================================================
      */
 
     function addEntry() {
 
+
         const manufacturer =
             document
-                .getElementById("manufacturer")
+                .getElementById(
+                    "manufacturer"
+                )
                 .value
                 .trim();
+
 
         const series =
             document
-                .getElementById("series")
+                .getElementById(
+                    "series"
+                )
                 .value
                 .trim();
+
 
         const model =
             document
-                .getElementById("model")
+                .getElementById(
+                    "model"
+                )
                 .value
                 .trim();
+
 
         const variant =
             document
-                .getElementById("variant")
+                .getElementById(
+                    "variant"
+                )
                 .value
-                .trim() || "Standard";
+                .trim()
+                ||
+                "Standard";
+
 
         const sourceUrl =
             document
-                .getElementById("source_url")
+                .getElementById(
+                    "source_url"
+                )
                 .value
                 .trim();
+
 
 
         if (!manufacturer) {
 
             document
-                .getElementById("manufacturer")
+                .getElementById(
+                    "manufacturer"
+                )
                 .focus();
 
-            showToast("⚠ Hersteller erforderlich");
+
+            showToast(
+                "⚠ Hersteller erforderlich"
+            );
+
 
             return;
         }
 
 
+
+        /*
+         * Neuer Eintrag
+         */
+
         const entry = {
 
-            id: Date.now().toString(),
+            id:
+                Date.now().toString(),
 
             manufacturer_name:
                 manufacturer,
@@ -948,7 +1782,10 @@
                 sourceUrl || null,
 
             status:
-                (!series && !model)
+                (
+                    !series &&
+                    !model
+                )
                     ? "pending_discovery"
                     : "pending_machine",
 
@@ -956,101 +1793,673 @@
                 new Date()
                     .toISOString()
                     .split("T")[0]
+
         };
 
+
+
+        /*
+         * An bestehende Queue anhängen
+         */
 
         entries.push(entry);
 
 
+
+        /*
+         * Anzeige aktualisieren
+         */
+
         updateQueue();
 
 
+
+        /*
+         * Formular leeren
+         */
+
         document
-            .getElementById("machineForm")
+            .getElementById(
+                "machineForm"
+            )
             .reset();
 
 
         document
-            .getElementById("manufacturer")
+            .getElementById(
+                "manufacturer"
+            )
             .focus();
 
 
-        showToast("✓ Entry zur Research Queue hinzugefügt");
+
+        showToast(
+            "✓ Neuer Eintrag hinzugefügt"
+        );
+
     }
 
 
+
     /*
-     * UPDATE UI
+     * =========================================================
+     * QUEUE AKTUALISIEREN
+     * =========================================================
      */
 
     function updateQueue() {
 
+
         const output =
-            document.getElementById("jsonOutput");
+            document.getElementById(
+                "jsonOutput"
+            );
+
+
+        /*
+         * Genau das gewünschte Format:
+         *
+         * {
+         *   "entries": [...]
+         * }
+         */
 
         output.value =
             JSON.stringify(
-                entries,
+                {
+                    entries: entries
+                },
                 null,
                 2
             );
 
 
+
         document
-            .getElementById("queueCount")
+            .getElementById(
+                "queueCount"
+            )
             .textContent =
-                `${entries.length} ${
+
+                entries.length +
+                (
                     entries.length === 1
-                        ? "ENTRY"
-                        : "ENTRIES"
-                }`;
+                        ? " ENTRY"
+                        : " ENTRIES"
+                );
+
 
 
         document
-            .getElementById("emptyState")
+            .getElementById(
+                "emptyState"
+            )
             .style.display =
+
                 entries.length
                     ? "none"
                     : "flex";
+
     }
 
 
+
     /*
+     * =========================================================
+     * QUEUE SPEICHERN
+     * =========================================================
+     */
+
+    async function saveQueue() {
+
+
+        if (!entries.length) {
+
+            showToast(
+                "⚠ Queue ist leer"
+            );
+
+            return;
+        }
+
+
+
+        const json =
+            JSON.stringify(
+                {
+                    entries: entries
+                },
+                null,
+                2
+            );
+
+
+
+        /*
+         * -----------------------------------------------------
+         * FALL 1:
+         * Wir haben bereits einen File Handle.
+         * -----------------------------------------------------
+         */
+
+        if (queueFileHandle) {
+
+            try {
+
+
+                /*
+                 * Prüfen / anfordern,
+                 * ob wir schreiben dürfen.
+                 */
+
+                const permission =
+                    await verifyPermission(
+                        queueFileHandle,
+                        true
+                    );
+
+
+                if (
+                    !permission
+                ) {
+
+                    showToast(
+                        "⚠ Schreibberechtigung fehlt"
+                    );
+
+                    return;
+                }
+
+
+
+                /*
+                 * Datei zum Schreiben öffnen
+                 */
+
+                const writable =
+                    await queueFileHandle
+                        .createWritable();
+
+
+
+                /*
+                 * Neue komplette JSON schreiben
+                 */
+
+                await writable.write(
+                    json
+                );
+
+
+                /*
+                 * Datei schließen
+                 */
+
+                await writable.close();
+
+
+
+                updateFileStatus(
+                    "✓ GESPEICHERT: " +
+                    queueFileHandle.name +
+                    " — " +
+                    entries.length +
+                    " Entries",
+                    true
+                );
+
+
+                setStatus(
+                    "● GESPEICHERT",
+                    "green"
+                );
+
+
+                showToast(
+                    "✓ Queue direkt gespeichert"
+                );
+
+
+                return;
+
+
+            } catch (error) {
+
+                console.error(
+                    "Direktes Speichern fehlgeschlagen:",
+                    error
+                );
+
+                /*
+                 * Danach geht es weiter zum
+                 * Download-Fallback.
+                 */
+
+            }
+
+        }
+
+
+
+        /*
+         * -----------------------------------------------------
+         * FALL 2:
+         * Noch keine Datei verbunden.
+         *
+         * Wir versuchen eine neue Datei anzulegen.
+         * -----------------------------------------------------
+         */
+
+        if (
+            "showSaveFilePicker" in window
+        ) {
+
+            try {
+
+                const handle =
+                    await window.showSaveFilePicker({
+
+                        suggestedName:
+                            ".research_queue.json",
+
+                        types: [
+
+                            {
+                                description:
+                                    "Research Queue JSON",
+
+                                accept: {
+
+                                    "application/json":
+                                        [
+                                            ".json"
+                                        ]
+
+                                }
+
+                            }
+
+                        ]
+
+                    });
+
+
+                queueFileHandle =
+                    handle;
+
+
+                await saveFileHandle(
+                    queueFileHandle
+                );
+
+
+                const writable =
+                    await handle
+                        .createWritable();
+
+
+                await writable.write(
+                    json
+                );
+
+
+                await writable.close();
+
+
+                updateFileStatus(
+                    "✓ GESPEICHERT: " +
+                    handle.name,
+                    true
+                );
+
+
+                setStatus(
+                    "● GESPEICHERT",
+                    "green"
+                );
+
+
+                showToast(
+                    "✓ Queue gespeichert"
+                );
+
+
+                return;
+
+
+            } catch (error) {
+
+                if (
+                    error.name ===
+                    "AbortError"
+                ) {
+
+                    return;
+                }
+
+                console.error(error);
+
+            }
+
+        }
+
+
+
+        /*
+         * -----------------------------------------------------
+         * FALL 3:
+         * Klassischer Browser-Download.
+         *
+         * Hier kann Windows beim Speichern fragen:
+         *
+         * "Datei ersetzen?"
+         * -----------------------------------------------------
+         */
+
+        downloadQueue(json);
+
+    }
+
+
+
+    /*
+     * =========================================================
+     * DOWNLOAD FALLBACK
+     * =========================================================
+     */
+
+    function downloadQueue(
+        jsonData = null
+    ) {
+
+
+        const json =
+            jsonData ||
+            JSON.stringify(
+                {
+                    entries: entries
+                },
+                null,
+                2
+            );
+
+
+        const blob =
+            new Blob(
+                [json],
+                {
+                    type:
+                        "application/json"
+                }
+            );
+
+
+        const url =
+            URL.createObjectURL(
+                blob
+            );
+
+
+        const a =
+            document.createElement(
+                "a"
+            );
+
+
+        a.href =
+            url;
+
+
+        /*
+         * Dateiname:
+         *
+         * .research_queue.json
+         */
+
+        a.download =
+            ".research_queue.json";
+
+
+        document
+            .body
+            .appendChild(a);
+
+
+        a.click();
+
+
+        a.remove();
+
+
+        URL.revokeObjectURL(
+            url
+        );
+
+
+        showToast(
+            "↓ Queue zum Speichern bereit"
+        );
+
+    }
+
+
+
+    /*
+     * =========================================================
+     * FILE PERMISSION
+     * =========================================================
+     */
+
+    async function verifyPermission(
+        fileHandle,
+        readWrite = false
+    ) {
+
+
+        const options = {
+
+            mode:
+                readWrite
+                    ? "readwrite"
+                    : "read"
+
+        };
+
+
+        /*
+         * Bereits erlaubt?
+         */
+
+        if (
+            (
+                await fileHandle
+                    .queryPermission(
+                        options
+                    )
+            )
+            ===
+            "granted"
+        ) {
+
+            return true;
+        }
+
+
+        /*
+         * Permission anfordern
+         */
+
+        if (
+            (
+                await fileHandle
+                    .requestPermission(
+                        options
+                    )
+            )
+            ===
+            "granted"
+        ) {
+
+            return true;
+        }
+
+
+        return false;
+
+    }
+
+
+
+    /*
+     * =========================================================
+     * STATUS
+     * =========================================================
+     */
+
+    function setStatus(
+        text,
+        type
+    ) {
+
+
+        const element =
+            document.getElementById(
+                "systemStatus"
+            );
+
+
+        element.textContent =
+            text;
+
+
+        if (
+            type === "green"
+        ) {
+
+            element.style.color =
+                "var(--green)";
+
+        } else if (
+            type === "red"
+        ) {
+
+            element.style.color =
+                "var(--danger)";
+
+        } else {
+
+            element.style.color =
+                "var(--cyan)";
+        }
+
+    }
+
+
+
+    /*
+     * =========================================================
+     * FILE STATUS
+     * =========================================================
+     */
+
+    function updateFileStatus(
+        text,
+        success
+    ) {
+
+
+        const element =
+            document.getElementById(
+                "fileStatus"
+            );
+
+
+        element.innerHTML =
+            text;
+
+
+        if (success) {
+
+            element.style.borderColor =
+                "rgba(0,255,157,0.18)";
+
+        } else {
+
+            element.style.borderColor =
+                "rgba(255,77,109,0.18)";
+        }
+
+    }
+
+
+
+    /*
+     * =========================================================
      * TOAST
+     * =========================================================
      */
 
     let toastTimer;
 
-    function showToast(message) {
+
+    function showToast(
+        message
+    ) {
+
 
         const toast =
-            document.getElementById("toast");
+            document.getElementById(
+                "toast"
+            );
 
-        toast.textContent = message;
 
-        toast.classList.add("show");
+        toast.textContent =
+            message;
 
-        clearTimeout(toastTimer);
+
+        toast.classList.add(
+            "show"
+        );
+
+
+        clearTimeout(
+            toastTimer
+        );
+
 
         toastTimer =
-            setTimeout(() => {
+            setTimeout(
+                function() {
 
-                toast.classList.remove("show");
+                    toast.classList.remove(
+                        "show"
+                    );
 
-            }, 2200);
+                },
+                2500
+            );
+
     }
 
 
+
     /*
+     * =========================================================
+     * KEYBOARD SHORTCUT
+     *
      * CTRL + ENTER
-     * Add entry via keyboard
+     * = neuen Eintrag hinzufügen
+     * =========================================================
      */
 
     document
-        .getElementById("machineForm")
+        .getElementById(
+            "machineForm"
+        )
         .addEventListener(
             "keydown",
             function(event) {
+
 
                 if (
                     event.ctrlKey &&
@@ -1060,19 +2469,292 @@
                     event.preventDefault();
 
                     addEntry();
+
                 }
 
             }
         );
 
 
+
     /*
-     * INITIAL STATE
+     * =========================================================
+     * FILE HANDLE PERSISTENZ
+     *
+     * Der File Handle wird in IndexedDB gespeichert,
+     * damit der Browser ihn beim nächsten Start wieder
+     * kennt.
+     * =========================================================
      */
 
-    updateQueue();
+    const DB_NAME =
+        "cnc_research_control";
+
+
+    const DB_STORE =
+        "settings";
+
+
+    function openDatabase() {
+
+
+        return new Promise(
+            function(resolve, reject) {
+
+
+                const request =
+                    indexedDB.open(
+                        DB_NAME,
+                        1
+                    );
+
+
+                request.onupgradeneeded =
+                    function(event) {
+
+                        const db =
+                            event.target.result;
+
+
+                        if (
+                            !db.objectStoreNames
+                                .contains(DB_STORE)
+                        ) {
+
+                            db.createObjectStore(
+                                DB_STORE
+                            );
+
+                        }
+
+                    };
+
+
+                request.onsuccess =
+                    function() {
+
+                        resolve(
+                            request.result
+                        );
+
+                    };
+
+
+                request.onerror =
+                    function() {
+
+                        reject(
+                            request.error
+                        );
+
+                    };
+
+            }
+        );
+
+    }
+
+
+
+    async function saveFileHandle(
+        handle
+    ) {
+
+
+        try {
+
+            const db =
+                await openDatabase();
+
+
+            return new Promise(
+                function(resolve, reject) {
+
+
+                    const transaction =
+                        db.transaction(
+                            DB_STORE,
+                            "readwrite"
+                        );
+
+
+                    const store =
+                        transaction.objectStore(
+                            DB_STORE
+                        );
+
+
+                    const request =
+                        store.put(
+                            handle,
+                            "queueFile"
+                        );
+
+
+                    request.onsuccess =
+                        function() {
+
+                            resolve();
+
+                        };
+
+
+                    request.onerror =
+                        function() {
+
+                            reject(
+                                request.error
+                            );
+
+                        };
+
+                }
+            );
+
+        } catch (error) {
+
+            console.log(
+                "File Handle konnte nicht gespeichert werden:",
+                error
+            );
+
+        }
+
+    }
+
+
+
+    async function restoreFileHandle() {
+
+
+        try {
+
+            const db =
+                await openDatabase();
+
+
+            const handle =
+                await new Promise(
+                    function(resolve, reject) {
+
+
+                        const transaction =
+                            db.transaction(
+                                DB_STORE,
+                                "readonly"
+                            );
+
+
+                        const store =
+                            transaction.objectStore(
+                                DB_STORE
+                            );
+
+
+                        const request =
+                            store.get(
+                                "queueFile"
+                            );
+
+
+                        request.onsuccess =
+                            function() {
+
+                                resolve(
+                                    request.result
+                                );
+
+                            };
+
+
+                        request.onerror =
+                            function() {
+
+                                reject(
+                                    request.error
+                                );
+
+                            };
+
+                    }
+                );
+
+
+            if (!handle) {
+
+                /*
+                 * Noch keine Datei bekannt.
+                 *
+                 * Wir lassen den Benutzer
+                 * beim Start auswählen.
+                 */
+
+                updateFileStatus(
+                    "📂 Bitte einmal die bestehende " +
+                    "<strong>.research_queue.json</strong> " +
+                    "öffnen.",
+                    false
+                );
+
+
+                /*
+                 * Nicht automatisch öffnen,
+                 * weil Browser User-Gesture benötigt.
+                 */
+
+                return;
+            }
+
+
+            /*
+             * Prüfen ob der Handle noch gültig ist.
+             */
+
+            const permission =
+                await verifyPermission(
+                    handle,
+                    false
+                );
+
+
+            if (permission) {
+
+                queueFileHandle =
+                    handle;
+
+
+                await loadFromHandle(
+                    handle
+                );
+
+            } else {
+
+                updateFileStatus(
+                    "📂 Queue-Datei bekannt. " +
+                    "Bitte einmal auf " +
+                    "<strong>QUEUE ÖFFNEN</strong> " +
+                    "klicken.",
+                    false
+                );
+
+            }
+
+        } catch (error) {
+
+            console.log(
+                "Restore File Handle fehlgeschlagen:",
+                error
+            );
+
+        }
+
+    }
+
 
 </script>
 
+
 </body>
+
 </html>
+```
