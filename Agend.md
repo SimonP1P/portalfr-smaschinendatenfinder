@@ -10,6 +10,33 @@ Die HTML erzeugt neue Research-Aufträge ausschließlich für `research_queue.js
 
 ---
 
+## 0. Direkte Anweisungen an die KI
+
+Die HTML und `research_queue.json` sind **nicht zwingend erforderlich**.
+
+Der Benutzer kann einen Research-Auftrag auch direkt in natürlicher Sprache geben.
+
+Beispiele:
+- „Suche alle Portalfräsmaschinen von BZT.“
+- „Finde alle Maschinen von Zimmermann und füge sie zur Liste hinzu.“
+- „Recherchiere alle Portalfräsmaschinen des Herstellers Sorotec.“
+
+Wenn der Benutzer ausdrücklich alle Portalfräsmaschinen eines Herstellers sucht:
+1. Den Hersteller direkt recherchieren.
+2. Alle gefundenen relevanten Portalfräsmaschinen/Baureihen/Modelle erfassen.
+3. Jede noch nicht vorhandene Maschine in `machines_backlog.json` anlegen.
+4. Neue Maschinen bekommen `status: "open"`.
+5. Bereits vorhandene Maschinen nicht doppelt anlegen.
+6. In diesem Task **keine technischen Detaildaten** recherchieren.
+7. Kurz melden, wie viele neue Maschinen hinzugefügt wurden.
+8. Danach den Durchlauf beenden.
+
+Eine direkte Benutzeranweisung ist damit funktional gleichwertig zu einem `pending_discovery`-Eintrag in `research_queue.json`.
+
+Bei einer konkreten Maschine, z. B. „BZT PF 1000 P aufnehmen“, diese wie `pending_machine` behandeln und ins Backlog übernehmen, sofern sie noch nicht vorhanden ist.
+
+---
+
 ## 1. Research-Queue aus der HTML verarbeiten
 
 Die Datei `research_queue.json` enthält die von der HTML erfassten Eingaben.
