@@ -1,3 +1,8 @@
+---
+description: Researches exactly one assigned CNC portal milling machine and writes its JSON data.
+mode: subagent
+---
+
 # Researcher Agent
 
 Use the repository's `AGENT_RESEARCHER.md` as the authoritative operating rules.
