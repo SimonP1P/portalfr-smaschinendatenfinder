@@ -4,11 +4,31 @@
 
 Jeder KI-Durchlauf erledigt **genau einen logischen Task** und endet danach.
 
-Beim Start immer zuerst `machines_backlog.json` prüfen.
+Beim Start immer zuerst `research_queue.json` und danach `machines_backlog.json` prüfen.
+
+Die HTML erzeugt neue Research-Aufträge ausschließlich für `research_queue.json`. Diese Datei ist die Übergabestelle zwischen HTML und Agent.
 
 ---
 
-## 1. Neue Eingabe aus der HTML?
+## 1. Research-Queue aus der HTML verarbeiten
+
+Die Datei `research_queue.json` enthält die von der HTML erfassten Eingaben.
+
+Wenn `research_queue.json` Einträge enthält:
+
+1. Jeden Queue-Eintrag einzeln prüfen.
+2. Bei `pending_discovery` den Hersteller recherchieren und alle gefundenen Portalfräsmaschinen in `machines_backlog.json` übernehmen.
+3. Bei `pending_machine` die konkrete Maschine in `machines_backlog.json` übernehmen.
+4. Bereits vorhandene Maschinen nicht doppelt anlegen.
+5. Den bearbeiteten Queue-Eintrag aus `research_queue.json` entfernen.
+6. `research_queue.json` wieder als leere Queue speichern, sobald alle darin enthaltenen Eingaben verarbeitet wurden.
+7. Diesen Durchlauf beenden.
+
+**Wichtig:** Das Leeren von `research_queue.json` darf erst erfolgen, wenn die enthaltenen Eingaben erfolgreich in `machines_backlog.json` übernommen wurden.
+
+---
+
+## 2. Neue Eingabe aus der HTML?
 
 ### A. Nur Hersteller eingetragen
 
@@ -35,7 +55,7 @@ Wenn eine konkrete Maschine angegeben wurde:
 
 ---
 
-## 2. Eine offene Maschine recherchieren
+## 3. Eine offene Maschine recherchieren
 
 Wenn keine neue Eingabe vorhanden ist:
 
@@ -61,7 +81,7 @@ maschinendaten/BZT/PF_1000_P.json
 
 ---
 
-# 3. Verbindliches machine.json-Schema
+# 4. Verbindliches machine.json-Schema
 
 Jede Maschine erhält eine **eigene JSON-Datei**. Die Struktur ist:
 
@@ -210,7 +230,7 @@ Gesucht werden ausschließlich Maschinen-/Modellinformationen:
 
 ---
 
-## 4. Recherche-Regeln
+## 5. Recherche-Regeln
 
 - **Niemals Werte schätzen.**
 - Wenn ein Wert nicht zuverlässig gefunden wird: `null`.
@@ -226,7 +246,7 @@ Gesucht werden ausschließlich Maschinen-/Modellinformationen:
 
 ---
 
-## 5. Dateistruktur
+## 6. Dateistruktur
 
 Die fertigen Maschinendaten liegen ausschließlich im Ordner `maschinendaten`.
 
@@ -272,7 +292,9 @@ Es gibt **keinen TODO-Status**.
 
 Pro KI-Durchlauf wird **genau ein Task** erledigt.
 
-Ein Hersteller-Discovery-Task erzeugt nur die Maschinenliste.
+**Priorität:** `research_queue.json` zuerst verarbeiten. Danach offene Maschinen aus `machines_backlog.json` bearbeiten.
+
+Ein Hersteller-Discovery-Task erzeugt nur die Maschinenliste und trägt die gefundenen Maschinen in `machines_backlog.json` ein.
 
 Ein Maschinen-Task recherchiert nur **eine einzige Maschine** und erstellt/aktualisiert nur deren JSON.
 
