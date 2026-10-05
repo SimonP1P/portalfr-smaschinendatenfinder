@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>CNC Portalfräsen - Neue Maschinen Erfassen</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 30px; background: #f4f6f8; }
+        .container { max-width: 700px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        h2 { color: #333; }
+        label { display: block; margin-top: 10px; font-weight: bold; }
+        input, select { width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        button { margin-top: 15px; padding: 10px 15px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        textarea { width: 100%; height: 150px; margin-top: 15px; font-family: monospace; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Neue Portalfräsmaschine Eintragen</h2>
+    <form id="machineForm">
+        <label for="manufacturer">Hersteller:</label>
+        <input type="text" id="manufacturer" required placeholder="z.B. Sorotec">
+
+        <label for="series">Baureihe:</label>
+        <input type="text" id="series" required placeholder="z.B. Basic-Line">
+
+        <label for="model">Modell:</label>
+        <input type="text" id="model" required placeholder="z.B. Basic-Line 0605">
+
+        <label for="variant">Variante (optional):</label>
+        <input type="text" id="variant" placeholder="z.B. Standard / Performance Kit">
+
+        <button type="button" onclick="addMachine()">Zur Liste hinzufügen</button>
+    </form>
+
+    <h3>Aktuelle neue Maschinen (JSON-Format zum Kopieren):</h3>
+    <textarea id="jsonOutput" readonly></textarea>
+</div>
+
+<script>
+    let newMachines = [];
+
+    function addMachine() {
+        const m = {
+            id: Date.now().toString(),
+            manufacturer: document.getElementById('manufacturer').value.trim(),
+            series: document.getElementById('series').value.trim(),
+            model: document.getElementById('model').value.trim(),
+            variant: document.getElementById('variant').value.trim() || "Standard",
+            status: "pending",
+            added_at: new Date().toISOString().split('T')[0]
+        };
+
+        if(!m.manufacturer || !m.series || !m.model) return;
+
+        newMachines.push(m);
+        document.getElementById('jsonOutput').value = JSON.stringify(newMachines, null, 2);
+        document.getElementById('machineForm').reset();
+    }
+</script>
+
+</body>
+</html>
