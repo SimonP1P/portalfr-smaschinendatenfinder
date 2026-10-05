@@ -1,1 +1,40 @@
-
+{
+  "last_updated": "2026-10-05",
+  "incoming_queue": [
+    {
+      "type": "new_manufacturer",
+      "manufacturer_name": "EAS GmbH",
+      "source_url": "https://www.eas-gmbh.de",
+      "status": "pending_discovery"
+    }
+  ],
+  "machines": [
+    {
+      "id": "sorotec-basicline-0605",
+      "manufacturer": "Sorotec",
+      "series": "Basic-Line",
+      "model": "0605",
+      "variant": "Standard",
+      "status": "open",
+      "data_file": null
+    },
+    {
+      "id": "sorotec-aluline-1107",
+      "manufacturer": "Sorotec",
+      "series": "ALU-Line",
+      "model": "1107",
+      "variant": "Standard",
+      "status": "completed",
+      "data_file": "./data/Sorotec/ALU-Line/1107.json"
+    },
+    {
+      "id": "bzt-pfx-1500",
+      "manufacturer": "BZT Maschinenbau",
+      "series": "PFX",
+      "model": "1500",
+      "variant": "Standard",
+      "status": "open",
+      "data_file": null
+    }
+  ]
+}
